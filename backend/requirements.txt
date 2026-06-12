@@ -1,0 +1,51 @@
+# Core
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# AI & LangGraph
+langchain==0.3.9
+langchain-groq==0.2.3
+langgraph==0.2.55
+langchain-community==0.3.9
+groq==0.13.1
+
+# Vector Store
+faiss-cpu==1.9.0.post1
+langchain-community==0.3.9
+
+# OCR & File Processing
+pytesseract==0.3.13
+Pillow==11.0.0
+pdfplumber==0.11.4
+PyPDF2==3.0.1
+python-docx==1.1.2
+
+# Data Processing
+pandas==2.2.3
+numpy==2.2.0
+scikit-learn==1.5.2
+
+# Utilities
+python-dotenv==1.0.1
+httpx==0.28.1
+aiofiles==24.1.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+email-validator==2.2.0
+
+# Caching
+redis==5.2.1
+
+# Monitoring
+loguru==0.7.3
