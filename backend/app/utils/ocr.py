@@ -20,21 +20,27 @@ def extract_text_from_image(image_path: str) -> str:
 
 
 def _pdfplumber_extract(pdf_path: str) -> str:
-    """Extract text and tables from a (decrypted) PDF using pdfplumber."""
+    """Extract text and tables from every page of a PDF using pdfplumber."""
     text_parts = []
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text:
-                    text_parts.append(text)
-                tables = page.extract_tables()
-                for table in tables:
-                    for row in table:
-                        if row:
-                            text_parts.append(" | ".join(str(c) for c in row if c))
+            total = len(pdf.pages)
+            logger.info(f"PDF has {total} page(s): {pdf_path}")
+            for i, page in enumerate(pdf.pages):
+                try:
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(f"--- Page {i+1} ---\n{text}")
+                    tables = page.extract_tables()
+                    for table in tables:
+                        for row in table:
+                            if row:
+                                text_parts.append(" | ".join(str(c) for c in row if c))
+                except Exception as page_err:
+                    logger.warning(f"Page {i+1} extraction failed: {page_err}")
     except Exception as e:
         logger.error(f"pdfplumber extraction error {pdf_path}: {e}")
+    logger.info(f"Extracted {len(text_parts)} text blocks from PDF")
     return "\n".join(text_parts)
 
 
