@@ -162,13 +162,13 @@ export default function UploadPage() {
                   PDF Password (if protected)
                 </p>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Most bank statements are protected with your date of birth (DDMMYYYY) or PAN number.
+                  Common passwords: <span className="text-amber-300">Customer ID</span>, date of birth (DDMMYYYY), or PAN number.
                 </p>
                 <input
                   type="password"
                   value={pdfPassword}
                   onChange={(e) => setPdfPassword(e.target.value)}
-                  placeholder="e.g. 01011990 or ABCDE1234F"
+                  placeholder="e.g. Customer ID, 01011990 or ABCDE1234F"
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
                 />
               </div>
