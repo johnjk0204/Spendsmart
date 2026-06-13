@@ -65,22 +65,27 @@ export function CategoryPieChart({ data, loading }: Props) {
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="space-y-2 mt-3">
+          <div className="space-y-2.5 mt-3">
             {top6.map((d) => (
-              <div key={d.category} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span>{CATEGORY_ICONS[d.category] ?? "📦"}</span>
-                  <span className="text-muted-foreground">{d.category}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div key={d.category} className="flex items-center gap-2 text-sm">
+                <span className="text-base shrink-0">{CATEGORY_ICONS[d.category] ?? "📦"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className="text-muted-foreground truncate">{d.category}</span>
+                    <span className="font-semibold ml-2 shrink-0">
+                      ₹{d.amount.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${d.percentage}%`, backgroundColor: d.color }}
                     />
                   </div>
-                  <span className="font-medium w-10 text-right">{d.percentage}%</span>
                 </div>
+                <span className="text-xs text-muted-foreground w-9 text-right shrink-0">
+                  {d.percentage}%
+                </span>
               </div>
             ))}
           </div>

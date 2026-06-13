@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { transactionsApi } from "@/lib/api";
 import { formatCurrency, formatDate, CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Filter, Trash2, Edit2, Loader2, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Trash2, Loader2, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 
@@ -26,8 +26,17 @@ interface Transaction {
   description?: string;
 }
 
+interface CategoryBreakdown {
+  category: string;
+  amount: number;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<CategoryBreakdown[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -40,8 +49,12 @@ export default function TransactionsPage() {
       const params: Record<string, string | undefined> = {};
       if (search) params.search = search;
       if (selectedCategory !== "All") params.category = selectedCategory;
-      const { data } = await transactionsApi.list({ ...params, limit: 100 });
-      setTransactions(data);
+      const [txnRes, catRes] = await Promise.all([
+        transactionsApi.list({ ...params, limit: 200 }),
+        transactionsApi.categories(),
+      ]);
+      setTransactions(txnRes.data);
+      setCategories(catRes.data);
     } catch {
       toast.error("Failed to load transactions");
     } finally {
@@ -197,6 +210,55 @@ export default function TransactionsPage() {
           )}
         </div>
       </div>
+
+      {/* Category Spending Breakdown */}
+      {categories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-2xl border border-border bg-card p-5"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-4 h-4 text-violet-400" />
+            <h3 className="font-semibold text-sm">Spending by Category</h3>
+            <span className="ml-auto text-xs text-muted-foreground">All time</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {categories.map((cat) => {
+              const color = cat.color ?? (CATEGORY_COLORS[cat.category] ?? "#94a3b8");
+              return (
+                <div
+                  key={cat.category}
+                  className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors hover:bg-accent/50"
+                  onClick={() => setSelectedCategory(cat.category === selectedCategory ? "All" : cat.category)}
+                  style={{ borderLeft: `3px solid ${color}` }}
+                >
+                  <span className="text-xl shrink-0">{CATEGORY_ICONS[cat.category] ?? "📦"}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-medium truncate">{cat.category}</span>
+                      <span className="text-sm font-bold ml-2 shrink-0" style={{ color }}>
+                        {formatCurrency(cat.amount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden mr-2">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${cat.percentage}%`, backgroundColor: color }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {cat.count} txn · {cat.percentage}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       <AddTransactionModal
         open={showAddModal}
