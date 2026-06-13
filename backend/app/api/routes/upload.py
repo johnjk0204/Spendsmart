@@ -15,6 +15,15 @@ from loguru import logger
 
 router = APIRouter()
 
+
+def _delete_file(path: str) -> None:
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        logger.warning(f"Could not delete file {path}: {e}")
+
+
 ALLOWED_TYPES = {
     "application/pdf", "image/png", "image/jpeg", "image/jpg",
     "image/webp", "text/csv", "application/vnd.ms-excel",
@@ -77,22 +86,30 @@ async def upload_file(
                 pdf_password=pdf_password or None,
             )
         except ValueError as e:
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
+            _delete_file(file_path)
             raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            _delete_file(file_path)
+            logger.error(f"Analysis pipeline error: {e}")
+            raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+    # Always delete the uploaded file — bank statements must not be retained
+    _delete_file(file_path)
 
     # Create upload record first
-    upload_record = UploadRecord(
-        user_id=current_user.id,
-        original_filename=file.filename or "unknown",
-        file_size_kb=len(content) // 1024,
-        transactions_count=0,
-        health_score=float(result.get("health_score", 0)),
-    )
-    db.add(upload_record)
-    await db.flush()  # get upload_record.id before committing
+    try:
+        upload_record = UploadRecord(
+            user_id=current_user.id,
+            original_filename=file.filename or "unknown",
+            file_size_kb=len(content) // 1024,
+            transactions_count=0,
+            health_score=float(result.get("health_score", 0)),
+        )
+        db.add(upload_record)
+        await db.flush()  # get upload_record.id before committing
+    except Exception as e:
+        logger.error(f"Failed to create upload record: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     # Persist extracted transactions linked to this upload
     saved_count = 0
@@ -132,14 +149,12 @@ async def upload_file(
             logger.warning(f"Failed to save transaction: {e}")
 
     upload_record.transactions_count = saved_count
-    await db.commit()
-    logger.info(f"Saved {saved_count} transactions for user {current_user.id}")
-
-    # Delete the file immediately after processing — bank statements must not be retained
     try:
-        os.remove(file_path)
+        await db.commit()
     except Exception as e:
-        logger.warning(f"Could not delete uploaded file {file_path}: {e}")
+        logger.error(f"DB commit failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save transactions: {str(e)}")
+    logger.info(f"Saved {saved_count} transactions for user {current_user.id}")
 
     return {
         "message": f"Successfully processed file and extracted {saved_count} transactions",
