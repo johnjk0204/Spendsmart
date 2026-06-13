@@ -1,16 +1,25 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/Header";
-import { uploadApi } from "@/lib/api";
+import { uploadApi, uploadsHistoryApi } from "@/lib/api";
 import {
-  Upload, FileText, Image, CheckCircle2, AlertCircle,
-  Loader2, X, TrendingDown, Sparkles, RefreshCw,
+  Upload, FileText, Image, CheckCircle2,
+  Loader2, X, TrendingDown, Sparkles, RefreshCw, Trash2, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+interface UploadHistoryItem {
+  id: string;
+  filename: string;
+  file_size_kb: number;
+  transactions_count: number;
+  health_score: number;
+  uploaded_at: string;
+}
 
 interface UploadResult {
   message: string;
@@ -29,6 +38,30 @@ export default function UploadPage() {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [textMode, setTextMode] = useState(false);
   const [pasteText, setPasteText] = useState("");
+  const [history, setHistory] = useState<UploadHistoryItem[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadHistory = useCallback(async () => {
+    try {
+      const { data } = await uploadsHistoryApi.list();
+      setHistory(data);
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  const handleDeleteUpload = async (id: string, filename: string) => {
+    setDeletingId(id);
+    try {
+      const { data } = await uploadsHistoryApi.delete(id);
+      toast.success(data.message);
+      setHistory((h) => h.filter((r) => r.id !== id));
+    } catch {
+      toast.error("Failed to delete upload");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const onDrop = useCallback((accepted: File[]) => {
     if (accepted[0]) setFile(accepted[0]);
@@ -56,6 +89,7 @@ export default function UploadPage() {
       const { data } = await uploadApi.file(formData);
       setResult(data);
       toast.success(`Extracted ${data.transactions_saved} transactions!`);
+      loadHistory();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Upload failed";
       toast.error(msg);
@@ -302,6 +336,50 @@ export default function UploadPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Upload History */}
+        {history.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Upload History
+            </h3>
+            <div className="space-y-2">
+              {history.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.filename}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {item.transactions_count} transactions · {item.file_size_kb} KB ·{" "}
+                      {new Date(item.uploaded_at).toLocaleDateString("en-IN", {
+                        day: "numeric", month: "short", year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteUpload(item.id, item.filename)}
+                    disabled={deletingId === item.id}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                    title="Delete upload and its transactions"
+                  >
+                    {deletingId === item.id
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Trash2 className="w-4 h-4" />
+                    }
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

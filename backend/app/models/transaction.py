@@ -52,6 +52,7 @@ class Transaction(Base):
 
     # Source
     source = Column(String, default="manual")  # manual, csv, pdf, ocr
+    upload_id = Column(String, ForeignKey("upload_records.id", ondelete="CASCADE"), nullable=True, index=True)
     raw_text = Column(Text, nullable=True)
     receipt_url = Column(String, nullable=True)
 
@@ -62,3 +63,4 @@ class Transaction(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="transactions")
+    upload_record = relationship("UploadRecord", back_populates="transactions")

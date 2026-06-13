@@ -82,6 +82,12 @@ export const uploadApi = {
   analyzeText: (text: string) => api.post("/api/upload/analyze-text", { text }),
 };
 
+// ── Upload History ────────────────────────────────────
+export const uploadsHistoryApi = {
+  list: () => api.get("/api/uploads"),
+  delete: (id: string) => api.delete(`/api/uploads/${id}`),
+};
+
 // ── Chat ──────────────────────────────────────────────
 export const chatApi = {
   send: (message: string, history: object[]) =>

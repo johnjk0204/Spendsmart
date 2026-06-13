@@ -7,6 +7,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.user import User
 from app.models.transaction import Transaction
+from app.models.upload_record import UploadRecord
 from app.api.deps import get_current_user
 from app.agents.graph import run_expense_analysis
 from app.config import settings
@@ -82,7 +83,18 @@ async def upload_file(
                 pass
             raise HTTPException(status_code=400, detail=str(e))
 
-    # Persist extracted transactions to DB
+    # Create upload record first
+    upload_record = UploadRecord(
+        user_id=current_user.id,
+        original_filename=file.filename or "unknown",
+        file_size_kb=len(content) // 1024,
+        transactions_count=0,
+        health_score=float(result.get("health_score", 0)),
+    )
+    db.add(upload_record)
+    await db.flush()  # get upload_record.id before committing
+
+    # Persist extracted transactions linked to this upload
     saved_count = 0
     for txn_data in result.get("categorized_transactions", []):
         try:
@@ -97,6 +109,7 @@ async def upload_file(
 
             txn = Transaction(
                 user_id=current_user.id,
+                upload_id=upload_record.id,
                 amount=float(txn_data.get("amount", 0)),
                 merchant=str(txn_data.get("merchant", "Unknown"))[:200],
                 description=txn_data.get("description"),
@@ -118,6 +131,7 @@ async def upload_file(
         except Exception as e:
             logger.warning(f"Failed to save transaction: {e}")
 
+    upload_record.transactions_count = saved_count
     await db.commit()
     logger.info(f"Saved {saved_count} transactions for user {current_user.id}")
 

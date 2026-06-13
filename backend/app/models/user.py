@@ -31,3 +31,4 @@ class User(Base):
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")
     insights = relationship("Insight", back_populates="user", cascade="all, delete-orphan")
+    upload_records = relationship("UploadRecord", back_populates="user", cascade="all, delete-orphan")

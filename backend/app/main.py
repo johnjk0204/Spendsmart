@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import os
 from app.config import settings
 from app.database import create_tables
-from app.api.routes import auth, transactions, budgets, insights, upload, chat
+from app.api.routes import auth, transactions, budgets, insights, upload, chat, uploads_history
 from loguru import logger
 
 
@@ -45,6 +45,7 @@ app.include_router(transactions.router, prefix="/api/transactions", tags=["Trans
 app.include_router(budgets.router, prefix="/api/budgets", tags=["Budgets"])
 app.include_router(insights.router, prefix="/api/insights", tags=["Insights"])
 app.include_router(upload.router, prefix="/api/upload", tags=["File Upload"])
+app.include_router(uploads_history.router, prefix="/api/uploads", tags=["Upload History"])
 app.include_router(chat.router, prefix="/api/chat", tags=["AI Chat"])
 
 

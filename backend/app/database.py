@@ -33,6 +33,6 @@ async def get_db() -> AsyncSession:
 
 
 async def create_tables():
-    from app.models import user, transaction, budget, insight  # noqa
+    from app.models import user, transaction, budget, insight, upload_record  # noqa
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
