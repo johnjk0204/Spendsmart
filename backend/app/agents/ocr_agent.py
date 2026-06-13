@@ -78,6 +78,8 @@ def ocr_node(state: ExpenseAnalyzerState) -> ExpenseAnalyzerState:
             logger.warning("LLM returned invalid JSON, using heuristic parsing")
             state["raw_transactions"] = heuristic_txns
 
+    except ValueError:
+        raise
     except Exception as e:
         logger.error(f"OCR Agent error: {e}")
         state["errors"].append(f"OCR error: {str(e)}")

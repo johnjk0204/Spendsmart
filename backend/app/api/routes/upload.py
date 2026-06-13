@@ -68,12 +68,19 @@ async def upload_file(
                 file_path=file_path,
             )
     else:
-        result = await run_expense_analysis(
-            user_id=current_user.id,
-            input_type="file",
-            file_path=file_path,
-            pdf_password=pdf_password or None,
-        )
+        try:
+            result = await run_expense_analysis(
+                user_id=current_user.id,
+                input_type="file",
+                file_path=file_path,
+                pdf_password=pdf_password or None,
+            )
+        except ValueError as e:
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+            raise HTTPException(status_code=400, detail=str(e))
 
     # Persist extracted transactions to DB
     saved_count = 0
