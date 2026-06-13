@@ -8,6 +8,7 @@ class ExpenseAnalyzerState(TypedDict):
     input_type: str              # "file" | "manual" | "text"
     raw_input: str               # raw text from OCR or manual entry
     file_path: Optional[str]
+    pdf_password: Optional[str]
 
     # OCR output
     extracted_text: str

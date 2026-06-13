@@ -37,7 +37,7 @@ def ocr_node(state: ExpenseAnalyzerState) -> ExpenseAnalyzerState:
 
     try:
         if state["input_type"] == "file" and state.get("file_path"):
-            raw_text = extract_file_text(state["file_path"], "")
+            raw_text = extract_file_text(state["file_path"], "", password=state.get("pdf_password"))
         elif state["input_type"] in ("manual", "text"):
             raw_text = state.get("raw_input", "")
         else:

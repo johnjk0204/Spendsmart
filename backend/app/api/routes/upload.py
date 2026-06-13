@@ -1,7 +1,7 @@
 import os
 import uuid
 import aiofiles
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from app.database import get_db
@@ -24,6 +24,7 @@ ALLOWED_TYPES = {
 @router.post("/file")
 async def upload_file(
     file: UploadFile = File(...),
+    pdf_password: str = Form(default=""),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -71,6 +72,7 @@ async def upload_file(
             user_id=current_user.id,
             input_type="file",
             file_path=file_path,
+            pdf_password=pdf_password or None,
         )
 
     # Persist extracted transactions to DB

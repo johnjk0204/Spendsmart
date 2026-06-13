@@ -24,6 +24,7 @@ interface UploadResult {
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [pdfPassword, setPdfPassword] = useState("");
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [textMode, setTextMode] = useState(false);
@@ -51,6 +52,7 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (pdfPassword) formData.append("pdf_password", pdfPassword);
       const { data } = await uploadApi.file(formData);
       setResult(data);
       toast.success(`Extracted ${data.transactions_saved} transactions!`);
@@ -79,9 +81,12 @@ export default function UploadPage() {
 
   const reset = () => {
     setFile(null);
+    setPdfPassword("");
     setResult(null);
     setPasteText("");
   };
+
+  const isPdf = file?.name.toLowerCase().endsWith(".pdf");
 
   return (
     <div>
@@ -148,6 +153,24 @@ export default function UploadPage() {
                     <X className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
+              </div>
+            )}
+
+            {file && !result && isPdf && (
+              <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                <p className="text-sm font-medium text-amber-400 mb-2">
+                  PDF Password (if protected)
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Most bank statements are protected with your date of birth (DDMMYYYY) or PAN number.
+                </p>
+                <input
+                  type="password"
+                  value={pdfPassword}
+                  onChange={(e) => setPdfPassword(e.target.value)}
+                  placeholder="e.g. 01011990 or ABCDE1234F"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                />
               </div>
             )}
 

@@ -18,15 +18,15 @@ def extract_text_from_image(image_path: str) -> str:
         return ""
 
 
-def extract_text_from_pdf(pdf_path: str) -> str:
+def extract_text_from_pdf(pdf_path: str, password: str = None) -> str:
     text_parts = []
+    open_kwargs = {"password": password} if password else {}
     try:
-        with pdfplumber.open(pdf_path) as pdf:
+        with pdfplumber.open(pdf_path, **open_kwargs) as pdf:
             for page in pdf.pages:
                 text = page.extract_text()
                 if text:
                     text_parts.append(text)
-                # Also try table extraction
                 tables = page.extract_tables()
                 for table in tables:
                     for row in table:
@@ -78,12 +78,12 @@ def parse_transactions_from_text(raw_text: str) -> list[dict]:
     return transactions
 
 
-def extract_file_text(file_path: str, file_type: str) -> str:
+def extract_file_text(file_path: str, file_type: str, password: str = None) -> str:
     """Route to appropriate extractor based on file type."""
     ext = Path(file_path).suffix.lower()
 
     if ext in [".pdf"]:
-        return extract_text_from_pdf(file_path)
+        return extract_text_from_pdf(file_path, password=password)
     elif ext in [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"]:
         return extract_text_from_image(file_path)
     else:
