@@ -26,8 +26,7 @@ frontend/.next/
 frontend/out/
 frontend/node_modules/
 
-# PWA generated files (built by next-pwa at build time)
-frontend/public/sw.js
+# PWA workbox generated files
 frontend/public/workbox-*.js
 frontend/public/worker-*.js
 frontend/public/fallback-*.js
